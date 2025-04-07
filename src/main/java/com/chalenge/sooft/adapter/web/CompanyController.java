@@ -1,9 +1,14 @@
-package com.chalenge.sooft.controller;
+package com.chalenge.sooft.adapter.web;
 
 
+import com.chalenge.sooft.adapter.web.dto.CompanyDto;
+import com.chalenge.sooft.adapter.web.exception.BusinessException;
 import com.chalenge.sooft.application.usecase.CompanyService;
 import com.chalenge.sooft.infrastructure.repository.entity.Company;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,8 +23,12 @@ public class CompanyController {
     private CompanyService companyService;
 
     @GetMapping("/")
-    public List<Company> getAllCompany() {
-        return companyService.getAllCompanies();
+    public Page<Company> getAllCompany(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String cuit,
+            Pageable page
+    ) {
+        return companyService.getAllCompanies(page, name, cuit);
     }
 
     @GetMapping("/{id}")
@@ -33,16 +42,16 @@ public class CompanyController {
     }
 
     @PostMapping("/")
-    public Company createCompany(@RequestBody Company company) {
-        return companyService.saveOrUpdateCompany(company);
+    public Company createCompany(@RequestBody @Valid CompanyDto companyDto) throws BusinessException {
+        return companyService.saveOrUpdateCompany(companyDto);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Company> updateCompany(@PathVariable Long id, @RequestBody Company company) {
+    public ResponseEntity<Company> updateCompany(@PathVariable Long id, @RequestBody @Valid CompanyDto companyDto) throws BusinessException {
         Optional<Company> existingCompany = companyService.getCompanyById(id);
         if (existingCompany.isPresent()) {
-            company.setId(id);
-            return ResponseEntity.ok(companyService.saveOrUpdateCompany(company));
+            companyDto.setId(id);
+            return ResponseEntity.ok(companyService.saveOrUpdateCompany(companyDto));
         } else {
             return ResponseEntity.notFound().build();
         }
